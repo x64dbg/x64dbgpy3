@@ -11,7 +11,8 @@ cmake_minimum_required(VERSION 3.18)
 #set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
 #set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
 
-project(x64dbgpy)
+project(x64dbgpy3)
+include(CMakePrintHelpers)
 
 # Add module path for dependencies
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -21,41 +22,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_FOLDER "Dependencies")
 include(CPM)
+
+# Provide option for user to specify custom python and x64dbg install path
+set(X64DBGPY3_PYTHON_EXECUTABLE "" CACHE FILEPATH "Python executable to use")
+#message(STATUS "PYTHON_EXECUTABLE=${X64DBGPY3_PYTHON_EXECUTABLE})
+set(X64DBGPY3_X64DBG_INSTALL_PATH "" CACHE FILEPATH "Path where x64dbg is installed")
+if(NOT X64DBGPY3_PYTHON_EXECUTABLE)
+    set(PYTHON_EXECUTABLE "c:/Python39/python.exe")
+else()
+    set(PYTHON_EXECUTABLE ${X64DBGPY3_PYTHON_EXECUTABLE})
+endif()
+#message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+
 include(pybind11)
 include(x64dbg)
 
 set(CMAKE_FOLDER "")
 
-pybind11_add_module(scriptapi NO_EXTRAS
-    src/scriptapi/scriptapi.cpp
-)
-# Link to the x64dbg SDK
-target_link_libraries(scriptapi PRIVATE x64dbg)
+add_subdirectory ("src/scriptapi")
+add_subdirectory ("src/x64dbgpy3")
 
-install(PROGRAMS
-    $<TARGET_FILE:scriptapi>
-    DESTINATION .
-    COMPONENT pyd
-    RENAME scriptapi${EXTENSION}
-    )
-
-if(WIN32)
-    set(EXTENSION ".pyd")
-else()
-    set(EXTENSION ".so")
-endif()
-
-# Create a plugin
-configure_file(src/x64dbgpy/pluginconfig.h.in include/x64dbgpy/pluginconfig.h ESCAPE_QUOTES)
-x64dbg_plugin(${PROJECT_NAME}
-	src/x64dbgpy/plugin.cpp
-	src/x64dbgpy/plugin.h
-	src/x64dbgpy/pluginmain.cpp
-	src/x64dbgpy/pluginmain.h
-	${CMAKE_CURRENT_BINARY_DIR}/include/x64dbgpy/pluginconfig.h
-)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
-# TODO: add post build step to reload plugin if necessary
-
-# Set the plugin as the startup project
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

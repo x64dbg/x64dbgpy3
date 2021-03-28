@@ -5,6 +5,6 @@ endif()
 
 CPMAddPackage(
     NAME pybind11
-    VERSION 2.6.1
+    VERSION 2.6.2
     GIT_REPOSITORY https://github.com/pybind/pybind11
 )

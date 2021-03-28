@@ -1,5 +1,5 @@
 #pragma warning(disable:4091)
-#include <windows.h>
+#include <Windows.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
